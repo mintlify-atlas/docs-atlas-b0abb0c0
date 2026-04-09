@@ -1,0 +1,74 @@
+---
+title: "Download queue"
+description: "Manage active, queued, and completed downloads"
+---
+
+The main window shows all your downloads as cards. Each card reflects the current state of a download in real time — you can monitor progress, cancel active downloads, retry failures, and remove completed items.
+
+## Download statuses
+
+Every download moves through a defined set of statuses:
+
+| Status | Description |
+|---|---|
+| **Pending** | Waiting in the queue for a download slot to open |
+| **Downloading** | Actively downloading streams from YouTube |
+| **Converting** | FFmpeg is processing the downloaded streams (merging video+audio or converting to MP3) |
+| **Completed** | The file is saved and ready |
+| **Error** | Something went wrong — see the log for details |
+| **Cancelled** | You cancelled the download before it finished |
+
+## What each card shows
+
+Each download card displays:
+
+- **Thumbnail** — pulled from YouTube at queue time
+- **Title and author** — from the video metadata
+- **Quality and file size** — the selected resolution and estimated size in MB
+- **Progress bar** — reflects bytes downloaded across all streams
+- **Speed and ETA** — download speed in MB/s, estimated time remaining, and bytes downloaded vs. total
+
+## Managing downloads
+
+Each download card has two action buttons whose behavior depends on the current status:
+
+| Status | Left button | Right button |
+|---|---|---|
+| Pending / Downloading / Converting | — | **Cancel** — stops the download and removes it from the queue |
+| Completed | **Open folder** — opens the file's containing directory in Explorer | **Delete** — deletes the downloaded file from disk and removes the card |
+| Error | **Retry** — re-queues the download from the beginning | **Cancel / Remove** — removes the card from the queue |
+
+<Note>
+  For downloads in the **Error** state, a **See Log** button is also available. Click it to view the full FFmpeg error output — useful for diagnosing why a specific download failed.
+</Note>
+
+## Parallel downloads and queuing
+
+YT Downloader runs up to **3 downloads in parallel**. Any additional downloads wait in the queue with **Pending** status and start automatically as slots become available. You don't need to manage this manually.
+
+<Tip>
+  If you're downloading a large playlist, watch the queue to see items move from Pending → Downloading → Converting → Completed. The Converting step is usually brief — it's just FFmpeg doing a fast stream merge or audio encode.
+</Tip>
+
+## Playlist groups in the queue
+
+Playlist downloads appear as a single group card rather than individual cards. The group card shows:
+
+- The playlist title and overall progress (averaged across all videos)
+- An expandable list of individual video download cards inside the group
+
+Each video inside the group has its own status, progress bar, and controls — you can cancel or remove individual videos from a playlist download independently.
+
+<AccordionGroup>
+  <Accordion title="Group status rules">
+    The group card's status reflects the combined state of its videos:
+
+    - **Completed** — all videos finished successfully
+    - **Downloading** — at least one video is currently downloading or converting
+    - **Error** — one or more videos failed (but others may have completed)
+    - **Pending** — no videos have started yet
+  </Accordion>
+  <Accordion title="Cancelling or deleting a group">
+    Clicking the cancel/delete button on a group card cancels the group's `CancellationTokenSource`, which stops all pending and in-progress videos at once. The entire playlist output folder on disk (including any already-completed files inside it) is then deleted, and the group card is removed from the queue.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,56 @@
+---
+title: "Downloading audio"
+description: "Extract and download YouTube audio as MP3 files"
+---
+
+YT Downloader can extract the audio track from any YouTube video and save it as an MP3 file. The app fetches the highest-quality audio stream available, then converts it to MP3 at 192 kbps using FFmpeg.
+
+## Download audio
+
+<Steps>
+  <Step title="Open the add download dialog">
+    Click the **+** button in the main window to open the download dialog.
+  </Step>
+  <Step title="Paste the video URL">
+    Paste a YouTube video URL into the input field. The app fetches the video's metadata, including the best available audio stream.
+  </Step>
+  <Step title="Select MP3 format">
+    In the format or quality selector, choose **MP3**. This tells the app to skip the video stream entirely and only download audio.
+  </Step>
+  <Step title="Choose a save folder">
+    Select the folder where the finished MP3 file will be saved.
+
+    <Tip>
+      Enable **Always ask where to save** in Settings to have the folder picker open automatically on every download — useful if you save music and podcasts to different folders.
+    </Tip>
+  </Step>
+  <Step title="Click Download">
+    The download is added to the queue. The app downloads the best available audio stream, then runs FFmpeg to convert it to MP3.
+  </Step>
+</Steps>
+
+## How audio downloading works
+
+<AccordionGroup>
+  <Accordion title="Stream selection">
+    The app selects the highest-bitrate audio-only stream available for the video, regardless of container format. This is typically a high-quality AAC stream.
+  </Accordion>
+  <Accordion title="FFmpeg conversion">
+    FFmpeg converts the downloaded stream to MP3 at **192 kbps** (`-ab 192k`). The video track is stripped with `-vn`. A temporary file is used during conversion and deleted automatically once the MP3 is written.
+  </Accordion>
+</AccordionGroup>
+
+## Output
+
+- **Format:** MP3
+- **Bitrate:** 192 kbps
+- **Location:** The folder you selected when setting up the download
+- **Filename:** The video's title, sanitized to remove characters not allowed in file names
+
+<Note>
+  Audio quality depends on what YouTube provides for the video. Most videos have a high-quality audio stream (typically 128–160 kbps AAC or higher), which converts cleanly to 192 kbps MP3. Older or lower-quality uploads may have lower source audio.
+</Note>
+
+<Tip>
+  Audio downloads work well for music, podcasts, lectures, or any content where you only need the sound. The resulting MP3 is compatible with all standard media players and devices.
+</Tip>

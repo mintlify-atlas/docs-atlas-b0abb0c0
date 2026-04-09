@@ -1,0 +1,262 @@
+---
+title: "Architecture"
+description: "How YT Downloader is structured internally"
+---
+
+YT Downloader follows the **Model-View-ViewModel (MVVM)** pattern, implemented using [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/). Communication between decoupled components uses the **Messenger** pattern via `IMessenger` (the `WeakReferenceMessenger` singleton).
+
+Dependency injection is configured in `App.xaml.cs` using `Microsoft.Extensions.DependencyInjection`. Services are registered as singletons; view models are registered as transients and resolved per navigation.
+
+## Project structure
+
+```
+YT Downloader/
+├── App.xaml.cs                  # DI container setup, app lifecycle, theme management
+├── Services/                    # Core application logic (singletons)
+│   ├── YoutubeService.cs        # YouTube metadata fetching and stream downloading
+│   ├── DownloadsService.cs      # Download queue, concurrency, FFmpeg invocation
+│   ├── SettingsService.cs       # Persistent settings read/write (config.json)
+│   ├── DialogService.cs         # Dialog presentation and folder picker
+│   └── Win32Service.cs          # Native Win32 window sizing helpers
+├── ViewModels/                  # UI state and command logic
+│   ├── MainPageViewModel.cs     # Top-level download list, message recipients
+│   ├── Components/
+│   │   ├── DownloadItemViewModel.cs   # Single download card state
+│   │   └── DownloadGroupViewModel.cs  # Playlist group card state
+│   └── Dialogs/
+│       ├── DetailsDialogViewModel.cs  # URL input and format/quality picker logic
+│       └── SettingsDialogViewModel.cs # Theme and settings dialog logic
+├── Views/                       # XAML UI pages and dialogs
+│   ├── MainPage.xaml            # Primary download list UI
+│   ├── SplashPage.xaml          # Startup splash screen
+│   └── Dialogs/
+│       ├── DetailsDialog.xaml   # URL input, format/quality picker
+│       ├── SettingsDialog.xaml  # Theme, output path settings
+│       ├── HelpDialog.xaml      # In-app help
+│       └── ErrorDialog.xaml     # FFmpeg/download error log viewer
+├── Models/                      # Plain data types
+│   ├── DownloadItem.cs          # Single video/audio download (ObservableObject)
+│   ├── DownloadGroup.cs         # Playlist group aggregating DownloadItems
+│   ├── AppSettings.cs           # Settings record (Theme, DefaultDownloadsPath, AlwaysAskWhereSave)
+│   └── Info/                    # VideoInfo, PlaylistInfo, StreamOption
+├── Enums/                       # DownloadType, DownloadStatus, MediaFormat, ThemeOption
+├── Helpers/
+│   ├── Builders/
+│   │   ├── DownloadItemBuilder.cs   # Fluent builder for DownloadItem
+│   │   └── DownloadGroupBuilder.cs  # Fluent builder for DownloadGroup
+│   ├── FFmpegLocator.cs         # Resolves FFmpeg binary path at runtime
+│   └── FileHelper.cs            # File/folder create, delete, sanitize, open
+└── Messages/                    # IMessenger message types
+```
+
+## Download flow
+
+The following trace shows the full path from user input to a completed file on disk.
+
+```
+[User]  →  DetailsDialog  →  IMessenger  →  MainPageViewModel  →  DownloadsService  →  YoutubeService + FFmpeg  →  [File]
+```
+
+<Steps>
+  <Step title="User pastes a URL into DetailsDialog">
+    The URL field accepts `youtube.com/watch?v=...` (video) or `youtube.com/playlist?list=...` (playlist). The `DetailsDialogViewModel.LoadContentInfo()` command calls `YoutubeService.GetVideoAsync()` or `YoutubeService.GetPlaylistAsync()` accordingly.
+
+    For a **video**: stream options (quality, format, file size) are dynamically populated from the stream manifest returned by `GetVideoAsync()`.
+
+    For a **playlist**: quality options come from `PlaylistInfo.Qualities` — a fixed hardcoded set spanning 144p to 2160p (including 60fps variants). Individual video streams are not pre-fetched at this stage; the per-video `GetPlaylistVideosAsync()` call (with `SemaphoreSlim(12)`) happens later in `DownloadsService.EnqueueGroupAsync()`.
+  </Step>
+  <Step title="User confirms — DownloadRequestMessage is sent">
+    When the user clicks confirm, the dialog view model constructs a `DownloadItem` (via `DownloadItemBuilder`) or a `DownloadGroup` (via `DownloadGroupBuilder`) and sends a `DownloadRequestMessage` over `IMessenger`.
+
+    ```csharp
+    // Sent by DetailsDialogViewModel after the user confirms
+    _messenger.Send(new DownloadRequestMessage(downloadable));
+    ```
+  </Step>
+  <Step title="MainPageViewModel receives the message and updates the UI">
+    `MainPageViewModel` implements `IRecipient<DownloadRequestMessage>`. Upon receipt, `OnEnqueueDownload()` adds the appropriate view model to the `Downloads` observable collection and calls `DownloadsService.EnqueueDownloadable()` (`MainPageViewModel.cs:66-73`).
+
+    ```csharp
+    private void OnEnqueueDownload(IDownloadable downloadable)
+    {
+        if (downloadable is DownloadItem item)
+            Downloads.Add(new DownloadItemViewModel(item, _messenger));
+        else if (downloadable is DownloadGroup group)
+            Downloads.Add(new DownloadGroupViewModel(group, _messenger));
+
+        _ = _downloadsService.EnqueueDownloadable(downloadable);
+    }
+    ```
+  </Step>
+  <Step title="DownloadsService enqueues the item into an unbounded Channel">
+    `DownloadsService` holds an `Channel<DownloadItem>` created with `Channel.CreateUnbounded<DownloadItem>()`. Single items are written directly; playlist groups trigger `EnqueueGroupAsync()`, which fetches all video metadata and writes each `DownloadItem` into the channel as it is built (`DownloadsService.cs:30-86`).
+  </Step>
+  <Step title="Consumer loop picks items and enforces the concurrency limit">
+    A long-running `ConsumeQueueAsync()` loop (started in the constructor) reads from the channel and dispatches each item to `DownloadAsync()`. A `SemaphoreSlim` with an initial count of **3** limits how many downloads run at the same time (`DownloadsService.cs:21-28`, `DownloadsService.cs:88-92`).
+
+    ```csharp
+    // Max 3 concurrent downloads
+    _semaphore = new SemaphoreSlim(maxParallelDownloads); // maxParallelDownloads = 3
+
+    private async Task ConsumeQueueAsync()
+    {
+        await foreach (var item in _downloadQueue.Reader.ReadAllAsync())
+            _ = DownloadAsync(item);
+    }
+    ```
+  </Step>
+  <Step title="YoutubeService downloads video and audio streams to temp files">
+    For a **video** download, `YoutubeService.DownloadVideoAsync()` fetches the video-only MP4 stream and the best audio-only MP4 stream separately, writing them to uniquely named temp files in `Path.GetTempPath()`. Progress is reported proportionally to the combined byte total (`YoutubeService.cs:116-168`).
+
+    For an **audio** download, only `DownloadAudioAsync()` is called, fetching the highest-bitrate audio stream (`YoutubeService.cs:171-194`).
+  </Step>
+  <Step title="FFmpeg merges or converts the temp files">
+    After streams are downloaded, `DownloadAsync()` marks the item as `Converting` and invokes FFmpeg via `RunFFmpegCommandAsync()`. The FFmpeg arguments differ by type (`DownloadsService.cs:119-131`):
+
+    ```bash
+    # Video: merge video + audio streams, copy codecs
+    ffmpeg -i "temp_v_XXXXXXXX.mp4" -i "temp_a_XXXXXXXX.mp4" -c copy -y "output.mp4"
+
+    # Audio: extract audio, encode to MP3 at 192 kbps
+    ffmpeg -i "temp_a_XXXXXXXX.webm" -vn -ab 192k -y "output.mp3"
+    ```
+
+    The FFmpeg process is killed via `CancellationToken` registration if the user cancels. Temp files are always deleted in the `finally` block.
+  </Step>
+  <Step title="DownloadItem status updates propagate to the UI">
+    `DownloadItem` extends `ObservableObject`. Status transitions (`MarkAsDownloading`, `MarkAsConverting`, `MarkAsCompleted`, `MarkAsError`) set `[ObservableProperty]` fields (`DownloadItem.cs:78-106`).
+
+    `DownloadItemViewModel` subscribes to `DownloadItem.PropertyChanged` and mirrors `Progress` and `Status` into its own observable properties, which the XAML binding system reflects immediately in the UI (`DownloadItemViewModel.cs:111-124`).
+  </Step>
+</Steps>
+
+## Key services
+
+<AccordionGroup>
+  <Accordion title="YoutubeService" icon="youtube" defaultOpen={true}>
+    Wraps the `YoutubeExplode` library. Registered as a **singleton** in `App.xaml.cs`.
+
+    | Method | Description |
+    |---|---|
+    | `GetVideoAsync(url, token)` | Fetches video metadata and available MP4 stream options |
+    | `GetPlaylistAsync(url, token)` | Fetches playlist title and author |
+    | `GetPlaylistVideosAsync(id, token)` | Fetches all video metadata in a playlist (up to 12 concurrent requests) |
+    | `DownloadVideoAsync(manifest, option, dir, progress, token)` | Downloads video-only + audio-only streams to temp files |
+    | `DownloadAudioAsync(manifest, dir, progress, token)` | Downloads the highest-bitrate audio stream to a temp file |
+    | `GetClosestMp4StreamOption(streams, quality)` | Selects the closest available resolution/FPS match |
+    | `GetBestMp3StreamOption(streams)` | Returns the MP3 `StreamOption` from the stream list |
+
+    Stream quality matching uses a scoring function that minimizes the sum of absolute differences in resolution and FPS against the target label (`YoutubeService.cs:220-231`).
+  </Accordion>
+  <Accordion title="DownloadsService" icon="download">
+    Manages the entire download lifecycle. Registered as a **singleton**.
+
+    - **Queue**: `Channel<DownloadItem>` (unbounded) — items flow from `EnqueueDownloadable()` to `ConsumeQueueAsync()`.
+    - **Concurrency**: `SemaphoreSlim(3)` — at most 3 `DownloadAsync()` tasks hold the semaphore at once.
+    - **Playlist groups**: `EnqueueGroupAsync()` resolves all video metadata asynchronously, builds each `DownloadItem` via `DownloadItemBuilder`, and writes them individually to the channel.
+    - **FFmpeg invocation**: `RunFFmpegCommandAsync()` starts FFmpeg as a child process with `UseShellExecute = false` and `CreateNoWindow = true`. stderr is captured; a non-zero exit code throws an exception that sets the item to the `Error` state.
+    - **Cancellation**: Each `DownloadItem` has its own `CancellationTokenSource`. Items that belong to a `DownloadGroup` are created with `CancellationTokenSource.CreateLinkedTokenSource(groupToken)` so cancelling the group cancels all of its items.
+  </Accordion>
+  <Accordion title="SettingsService" icon="gear">
+    Reads and writes `config.json` from `%APPDATA%\YT Downloader\`. Registered as a **singleton**.
+
+    Settings are stored as a C# `record`:
+
+    ```csharp
+    public record AppSettings(
+        ThemeOption Theme,
+        string DefaultDownloadsPath,
+        bool AlwaysAskWhereSave
+    );
+    ```
+
+    On load, if the stored `DefaultDownloadsPath` does not exist, it is reset to the system Downloads folder (`SettingsService.cs:52-60`). On save, the record is serialized to indented JSON and written atomically via `File.WriteAllText`.
+  </Accordion>
+  <Accordion title="DialogService" icon="window-maximize">
+    Manages WinUI 3 `ContentDialog` presentation. Registered as a **singleton**. Must be initialized with a `XamlRoot` reference before any dialogs are shown (call `Initialize(root)` from `MainPage.xaml.cs` on page load).
+
+    Provides:
+    - `ShowDetailsDialogAsync()` — URL input and format picker
+    - `ShowSettingsDialogAsync()` — Theme and output path settings
+    - `ShowHelpDialogAsync()` — In-app help content
+    - `ShowErrorDialogAsync(message)` — FFmpeg or download error log
+    - `OpenFolderPickerAsync()` — Native folder picker returning the selected path
+  </Accordion>
+</AccordionGroup>
+
+## Messaging
+
+The app uses `WeakReferenceMessenger.Default` (registered as `IMessenger` in the DI container) to decouple dialogs, view models, and services.
+
+<Info>
+  Using `WeakReferenceMessenger` means recipients must keep a strong reference to themselves while active — view models registered with `_messenger.RegisterAll(this)` must call `_messenger.UnregisterAll(this)` in their `Dispose()` method to prevent leaks. Both `DownloadItemViewModel` and `DownloadGroupViewModel` do this correctly.
+</Info>
+
+| Message | Sent by | Received by | Purpose |
+|---|---|---|---|
+| `DownloadRequestMessage` | `DetailsDialogViewModel` | `MainPageViewModel` | User confirmed a download; carry the `IDownloadable` |
+| `RetryDownloadRequestMessage` | `DownloadItemViewModel` | `MainPageViewModel` | User clicked Retry on a failed item |
+| `RemoveDownloadRequestMessage` | `DownloadItemViewModel`, `DownloadGroupViewModel` | `MainPageViewModel`, `DownloadGroupViewModel` | User cancelled or deleted a download card |
+| `ErrorDialogRequestMessage` | `DownloadItemViewModel`, `DownloadGroupViewModel` | `MainPageViewModel` | Show the error log dialog for a failed download |
+| `ChangeThemeRequestMessage` | `SettingsDialogViewModel` | `App` | Apply a new theme to the window immediately |
+
+## Builders
+
+`DownloadItemBuilder` and `DownloadGroupBuilder` provide a fluent API for constructing model objects, keeping construction logic out of view models and services.
+
+```csharp
+// Building a DownloadItem for a playlist video (DownloadsService.cs:52-76)
+var item = new DownloadItemBuilder()
+    .FromVideoInfo(videoInfo)           // Sets Id, Url, Title, Author, ThumbnailUrl, Manifest
+    .WithOutputPath(outputPath)         // Sets OutputPath (extension added by AsVideo/AsAudio)
+    .WithGroupCancellation(groupToken)  // Links CTS to the parent group's token
+    .AsVideo(quality, videoStream, audioStream)  // Sets Type=Video, appends .mp4
+    .Build();
+```
+
+```csharp
+// Building a DownloadGroup from a playlist (DetailsDialogViewModel)
+var group = new DownloadGroupBuilder()
+    .FromPlaylistInfo(playlistInfo)     // Sets Id, Url, Title, Author
+    .WithOutputPath(outputPath)         // Sets OutputPath for the playlist folder
+    .WithFormat(DownloadType.Video, quality)  // Sets Type and Quality
+    .Build();
+```
+
+## Data flow summary
+
+```
+DetailsDialog
+    │
+    │  YoutubeService.GetVideoAsync() / GetPlaylistAsync()
+    │  ↳ returns VideoInfo / PlaylistInfo
+    │
+    │  DownloadItemBuilder / DownloadGroupBuilder
+    │  ↳ constructs DownloadItem / DownloadGroup
+    │
+    ▼
+IMessenger (DownloadRequestMessage)
+    │
+    ▼
+MainPageViewModel
+    ├── adds DownloadItemViewModel / DownloadGroupViewModel → ObservableCollection<Downloads>
+    └── calls DownloadsService.EnqueueDownloadable()
+            │
+            ▼
+        Channel<DownloadItem> (unbounded)
+            │
+            ▼ ConsumeQueueAsync()
+        SemaphoreSlim (max 3 concurrent)
+            │
+            ▼ DownloadAsync()
+        YoutubeService.DownloadVideoAsync() / DownloadAudioAsync()
+            ↳ temp files written to Path.GetTempPath()
+            │
+            ▼
+        FFmpeg (merge / convert)
+            ↳ final file written to OutputPath
+            │
+            ▼
+        DownloadItem.Status / Progress (ObservableProperty)
+            ↳ PropertyChanged → DownloadItemViewModel → XAML bindings → UI
+```

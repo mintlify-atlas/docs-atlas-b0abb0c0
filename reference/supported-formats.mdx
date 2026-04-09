@@ -1,0 +1,57 @@
+---
+title: "Supported formats"
+description: "Video and audio formats supported by YT Downloader"
+---
+
+YT Downloader supports two output formats — MP4 for video and MP3 for audio — driven by the `MediaFormat` enum and the stream filtering logic in `YoutubeService`.
+
+## Formats at a glance
+
+| Format | Type  | Extension | Notes                                          |
+| ------ | ----- | --------- | ---------------------------------------------- |
+| MP4    | Video | `.mp4`    | Multiple resolutions up to 4K/60fps            |
+| MP3    | Audio | `.mp3`    | 192 kbps, converted from the best audio stream |
+
+## Video (MP4)
+
+When you download a video, the app fetches two separate streams from YouTube's stream manifest:
+
+- A **video-only** MP4 stream at your chosen resolution
+- The **best available audio-only** MP4 stream
+
+FFmpeg then merges these into a single `.mp4` file using a lossless stream copy — no re-encoding, so the process is fast and the quality is identical to the source.
+
+Quality options are populated from YouTube's stream manifest, filtered to MP4 containers only. The available resolutions depend entirely on what the video uploader provided. Common options include 360p, 480p, 720p, 1080p, 1440p, and 2160p (4K), including 60fps variants where available.
+
+<Note>
+  The exact resolutions shown in the quality selector vary per video. Not every video will have every resolution — quality options reflect what YouTube actually has for that specific video.
+</Note>
+
+## Audio (MP3)
+
+When you download audio, the app selects the highest-bitrate audio-only stream available from YouTube (across all containers) and converts it to MP3 at **192 kbps** using FFmpeg.
+
+The quality selector always shows "Best" for audio — there is no manual bitrate or quality selection. The app automatically picks the highest quality source available.
+
+<Tip>
+  If you want the audio from a video download, use the MP3 option rather than extracting audio manually from an MP4 file. The MP3 path uses the best available audio stream, which may have a higher bitrate than the MP4-container audio stream.
+</Tip>
+
+## How format selection works
+
+<CardGroup cols={2}>
+  <Card title="Video download" icon="film">
+    Fetches video-only and audio-only MP4 streams. Merges them with FFmpeg using `-c copy`. Output is `.mp4`.
+  </Card>
+  <Card title="Audio download" icon="music">
+    Fetches the highest-bitrate audio-only stream (any container). Converts to MP3 at 192 kbps with FFmpeg. Output is `.mp3`.
+  </Card>
+</CardGroup>
+
+## Playlist downloads
+
+Playlists follow the same per-video format rules. When downloading a playlist as video, you select a quality from a fixed preset list spanning 144p to 2160p (4K), including 60fps variants. The app then downloads each video at the closest available MP4 stream to your chosen quality. When downloading as audio, each track is converted to MP3 at 192 kbps.
+
+<Info>
+  Unlike single-video downloads — where the quality list is dynamically populated from the stream manifest — playlist quality is selected from a fixed preset. The app uses closest-match logic to find the best available resolution for each individual video in the playlist.
+</Info>

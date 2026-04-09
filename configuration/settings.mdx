@@ -1,0 +1,84 @@
+---
+title: "Settings"
+description: "Configure YT Downloader to match your preferences"
+---
+
+The Settings dialog gives you control over the app's appearance and file-saving behavior. All options are persisted automatically to a local configuration file.
+
+## Opening settings
+
+Click the **Settings** icon in the top-right area of the main window toolbar. The Settings dialog opens as an overlay on top of the main window.
+
+## Available settings
+
+<CardGroup cols={3}>
+  <Card title="Theme" icon="palette">
+    Choose between Light, Dark, or System theme to match your Windows environment.
+  </Card>
+  <Card title="Default downloads folder" icon="folder">
+    Set the folder where downloaded files are saved when not prompted each time.
+  </Card>
+  <Card title="Always ask where to save" icon="circle-question">
+    Toggle whether the app prompts you for a save location on every download.
+  </Card>
+</CardGroup>
+
+## Settings reference
+
+<AccordionGroup>
+  <Accordion title="Theme">
+    Controls the visual appearance of the app. Corresponds to the `Theme` field in `config.json`.
+
+    | Value    | Behavior                                              |
+    | -------- | ----------------------------------------------------- |
+    | `System` | Follows the active Windows system theme (default)     |
+    | `Light`  | Always uses the light theme regardless of OS setting  |
+    | `Dark`   | Always uses the dark theme regardless of OS setting   |
+
+    The theme change applies immediately — no restart required.
+  </Accordion>
+
+  <Accordion title="Default downloads folder">
+    The folder where files are saved when **Always ask where to save** is disabled, or used as the starting location when the save dialog is shown.
+
+    Defaults to `%USERPROFILE%\Downloads` on a fresh install.
+
+    Corresponds to the `DefaultDownloadsPath` field in `config.json`.
+  </Accordion>
+
+  <Accordion title="Always ask where to save">
+    When **On** (default), a folder picker appears before each download so you can choose the destination individually.
+
+    When **Off**, every download is saved directly to the configured **Default downloads folder** without any prompt.
+
+    Corresponds to the `AlwaysAskWhereSave` boolean field in `config.json`.
+  </Accordion>
+</AccordionGroup>
+
+## Configuration file
+
+Settings are stored in:
+
+```
+%APPDATA%\YT Downloader\config.json
+```
+
+The file is created automatically on first launch. Its structure mirrors the `AppSettings` record defined in `Models/AppSettings.cs`:
+
+```json config.json
+{
+  "Theme": "System",
+  "DefaultDownloadsPath": "C:\\Users\\YourName\\Downloads",
+  "AlwaysAskWhereSave": true
+}
+```
+
+Valid values for `Theme` are `"System"`, `"Light"`, and `"Dark"`.
+
+<Note>
+  Settings are saved automatically when you close the Settings dialog. There is no explicit Save button — closing the dialog commits any changes you made.
+</Note>
+
+<Warning>
+  Editing `config.json` manually while the app is running may cause your changes to be overwritten. Close the app before editing the file directly.
+</Warning>

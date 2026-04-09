@@ -1,0 +1,80 @@
+{
+  "projectType": "general",
+  "projectName": "YT Downloader",
+  "projectDescription": "A Windows desktop application built with WinUI 3 and C# for downloading videos, music, and playlists from YouTube.",
+  "theme": "almond",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Using YT Downloader",
+        "pages": [
+          "guides/downloading-videos",
+          "guides/downloading-audio",
+          "guides/downloading-playlists",
+          "guides/download-queue"
+        ]
+      },
+      {
+        "group": "Configuration",
+        "pages": [
+          "configuration/settings",
+          "configuration/themes",
+          "configuration/download-path"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/supported-formats",
+          "reference/ffmpeg",
+          "reference/troubleshooting",
+          "reference/faq"
+        ]
+      },
+      {
+        "group": "Contributing",
+        "pages": [
+          "contributing/overview",
+          "contributing/architecture"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Download YouTube videos in MP4 format at various quality levels (up to 4K/60fps)",
+    "Download audio-only as MP3 from any YouTube video",
+    "Download entire YouTube playlists as video or audio in batch",
+    "Parallel downloads with up to 3 concurrent downloads",
+    "Built-in FFmpeg integration for video/audio muxing and conversion",
+    "MVVM architecture using CommunityToolkit.Mvvm",
+    "WinUI 3 modern Windows interface with light/dark/system theme support",
+    "Configurable default download path and save location prompts",
+    "Download queue with progress tracking, pause, cancel, and retry support",
+    "Available via installer (.exe) or Scoop package manager"
+  ],
+  "publicApiSurface": [
+    "YoutubeService.GetVideoAsync(string videoUrl, CancellationToken token)",
+    "YoutubeService.GetPlaylistAsync(string playlistUrl, CancellationToken token)",
+    "YoutubeService.GetPlaylistVideosAsync(string playlistId, CancellationToken token)",
+    "YoutubeService.DownloadVideoAsync(StreamManifest, StreamOption, string, IProgress<double>, CancellationToken)",
+    "YoutubeService.DownloadAudioAsync(StreamManifest, string, IProgress<double>, CancellationToken)",
+    "DownloadsService.EnqueueDownloadable(IDownloadable downloadable)",
+    "SettingsService.Save(AppSettings settings)",
+    "SettingsService.Current (AppSettings)",
+    "DownloadType enum: Video, Audio",
+    "MediaFormat enum: Mp4, Mp3",
+    "ThemeOption enum: System, Light, Dark",
+    "AppSettings record: Theme, DefaultDownloadsPath, AlwaysAskWhereSave"
+  ]
+}

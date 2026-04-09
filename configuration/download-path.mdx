@@ -1,0 +1,68 @@
+---
+title: "Download path"
+description: "Set where downloaded files are saved by default"
+---
+
+YT Downloader lets you configure a default folder for all downloads and control whether you are prompted to choose a location before each download.
+
+## Default download path
+
+On a fresh install, downloaded files are saved to your user's Downloads folder:
+
+```
+%USERPROFILE%\Downloads
+```
+
+You can change this to any folder on your system through the Settings dialog.
+
+<Note>
+  If the configured download path no longer exists when the app starts — for example, because the folder was deleted or a drive was disconnected — the app automatically falls back to `%USERPROFILE%\Downloads`. Your other settings are preserved.
+</Note>
+
+## Changing the default download folder
+
+<Steps>
+  <Step title="Open Settings">
+    Click the **Settings** icon in the top-right area of the main window toolbar.
+  </Step>
+  <Step title="Expand the Downloads section">
+    In the Settings dialog, locate the **Files** section and click **Downloads** to expand it.
+  </Step>
+  <Step title="Select a new folder">
+    Under **Default Downloads Folder**, click **Select Folder**. A folder picker dialog opens. Navigate to your preferred folder and confirm your selection.
+  </Step>
+  <Step title="Close Settings">
+    Click **Close**. The new path is saved immediately and will be used for all subsequent downloads.
+  </Step>
+</Steps>
+
+## Always ask where to save
+
+The **Always ask where to save files** toggle controls whether you are prompted for a save location on every download.
+
+| State | Behavior |
+| ----- | -------- |
+| **On** (default) | A folder picker appears before each download so you can choose the destination individually. |
+| **Off** | Files are saved directly to the **Default Downloads Folder** without any prompt. |
+
+You can toggle this option in the same **Downloads** expander in the Settings dialog.
+
+<Tip>
+  Disable **Always ask where to save** if you consistently download everything to the same folder. It removes the extra click on every download and speeds up your workflow.
+</Tip>
+
+## Configuration file reference
+
+Both settings are stored in `%APPDATA%\YT Downloader\config.json`:
+
+```json config.json
+{
+  "DefaultDownloadsPath": "C:\\Users\\YourName\\Downloads",
+  "AlwaysAskWhereSave": true
+}
+```
+
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `DefaultDownloadsPath` | string | `%USERPROFILE%\Downloads` | Absolute path to the folder used when not prompting per download. Falls back to the user's Downloads folder if the path is empty, whitespace-only, or no longer exists. |
+| `AlwaysAskWhereSave` | boolean | `true` | When `true`, a save dialog appears before each download. When `false`, files go directly to `DefaultDownloadsPath`. |

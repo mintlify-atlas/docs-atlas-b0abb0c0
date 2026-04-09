@@ -1,0 +1,49 @@
+---
+title: "FAQ"
+description: "Frequently asked questions about YT Downloader"
+---
+
+<AccordionGroup>
+  <Accordion title="Is YT Downloader free?">
+    Yes. YT Downloader is free and open source, released under the **GPL-3.0 license**. The source code is available on GitHub.
+  </Accordion>
+
+  <Accordion title="Does it work on macOS or Linux?">
+    No. YT Downloader is built with **WinUI 3** and only runs on **Windows 10 (build 17763)** or later. There are no plans for macOS or Linux support, as WinUI 3 is a Windows-only framework.
+  </Accordion>
+
+  <Accordion title="How many downloads can run at the same time?">
+    Up to **3 downloads run concurrently**. This limit is set by a `SemaphoreSlim` in `DownloadsService`. Any additional downloads you add are queued and start automatically as a slot becomes available — you do not need to manage the queue manually.
+  </Accordion>
+
+  <Accordion title="Can I download age-restricted or private videos?">
+    No. YT Downloader uses the **YouTubeExplode** library to fetch video metadata and streams. YouTubeExplode can only access publicly available content. Age-restricted videos, private videos, and members-only content cannot be downloaded.
+  </Accordion>
+
+  <Accordion title="What video qualities are available?">
+    Quality options depend on what YouTube provides for each individual video. The app queries the stream manifest and lists all available **MP4-container video-only streams**. Common options include 360p, 480p, 720p, 1080p, 1440p, and 2160p (4K), including 60fps variants where available.
+
+    If a resolution you expect is not listed, it is not available for that particular video.
+  </Accordion>
+
+  <Accordion title="Where are downloaded files saved?">
+    By default, files are saved to your **Downloads folder**. You can change the default save location in Settings. If the "Always ask where to save" option is enabled, a folder picker will appear for each download before it starts.
+
+    For playlist downloads, the app creates a subfolder named after the playlist inside the selected output directory.
+  </Accordion>
+
+  <Accordion title="Can I download videos from other websites?">
+    No. YT Downloader only supports **YouTube**. The app is built on the YouTubeExplode library, which is designed specifically for YouTube's URL format and stream API. Other video platforms are not supported.
+  </Accordion>
+
+  <Accordion title="How do I update YT Downloader?">
+    The update method depends on how you installed the app:
+
+    - **Via installer** — download the latest release from GitHub and run the installer again. It will update the existing installation in place.
+    - **Via Scoop** — run the following command in a terminal:
+
+    ```powershell
+    scoop update yt-downloader
+    ```
+  </Accordion>
+</AccordionGroup>

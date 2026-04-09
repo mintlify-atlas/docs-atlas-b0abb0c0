@@ -1,0 +1,70 @@
+---
+title: "Downloading videos"
+description: "Download YouTube videos as MP4 files in your chosen quality"
+---
+
+YT Downloader saves YouTube videos as MP4 files. The app downloads the video and audio streams separately, then merges them using FFmpeg — so you always get a properly muxed file, not just a raw stream.
+
+## Download a video
+
+<Steps>
+  <Step title="Open the add download dialog">
+    Click the **+** button in the main window to open the download dialog.
+  </Step>
+  <Step title="Paste the video URL">
+    Paste a YouTube video URL into the input field. The app fetches the video's metadata — title, author, thumbnail, and available stream qualities — from YouTube.
+  </Step>
+  <Step title="Select a quality">
+    Choose an MP4 quality from the dropdown. Available options come from YouTube's video-only MP4 streams and vary by video. Common options include:
+
+    | Quality | Notes |
+    |---|---|
+    | 1080p60 | Full HD at 60 fps |
+    | 1080p | Full HD at 30 fps |
+    | 720p60 | HD at 60 fps |
+    | 720p | HD at 30 fps |
+    | 480p | Standard definition |
+    | 360p | Lower definition |
+    | 240p | Lowest quality |
+
+    <Note>
+      Not all resolutions are available for every video. The list reflects what YouTube actually provides for that video at the time of download.
+    </Note>
+  </Step>
+  <Step title="Choose a save folder">
+    Select the folder where the finished MP4 file will be saved.
+
+    <Tip>
+      If you enable **Always ask where to save** in Settings, the folder picker appears automatically for every download. Otherwise, the app reuses the last folder you selected.
+    </Tip>
+  </Step>
+  <Step title="Click Download">
+    The download is added to the queue. The app downloads the video stream and audio stream concurrently, then runs FFmpeg to merge them into a single MP4 file.
+  </Step>
+</Steps>
+
+## How video downloading works
+
+<AccordionGroup>
+  <Accordion title="Stream selection">
+    When you pick a quality like "1080p60", the app queries YouTube's stream manifest for a matching video-only MP4 stream. It also separately fetches the best available MP4 audio-only stream. Both are downloaded to a temporary directory before being merged.
+
+    If an exact quality match isn't found, the app picks the closest available option based on resolution and frame rate.
+  </Accordion>
+  <Accordion title="FFmpeg merge">
+    Once both streams are downloaded, FFmpeg merges them with stream copy (`-c copy`), meaning no re-encoding occurs. The merge is fast and lossless. Temporary files are deleted automatically after the merge completes.
+  </Accordion>
+  <Accordion title="Progress tracking">
+    The progress bar tracks the combined download of both streams. The video stream progress is reported first, followed by the audio stream. The displayed percentage reflects total bytes downloaded across both.
+  </Accordion>
+</AccordionGroup>
+
+## Output
+
+- **Format:** MP4
+- **Location:** The folder you selected when setting up the download
+- **Filename:** The video's title, sanitized to remove characters not allowed in file names
+
+<Warning>
+  4K and 60 fps streams are not available for all videos. If your chosen quality isn't available, the app selects the closest match automatically.
+</Warning>

@@ -1,0 +1,101 @@
+---
+title: "Contributing"
+description: "How to contribute to YT Downloader"
+---
+
+Contributions to YT Downloader are welcome. Whether you're fixing a bug, proposing a feature, or improving the codebase, this page explains how to get involved and how to build the project from source.
+
+<Note>
+  YT Downloader is licensed under **GPL-3.0**. All contributions must be compatible with this license. By submitting a pull request, you agree that your code will be distributed under the same terms.
+</Note>
+
+## Ways to contribute
+
+<CardGroup cols={3}>
+  <Card title="Report a bug" icon="bug" href="https://github.com/TXG0Fk3/YT-Downloader/issues">
+    Found unexpected behavior? Open an issue with steps to reproduce, expected outcome, and actual outcome.
+  </Card>
+  <Card title="Suggest a feature" icon="lightbulb" href="https://github.com/TXG0Fk3/YT-Downloader/issues">
+    Have an idea? Open an issue describing the use case and how the feature would help.
+  </Card>
+  <Card title="Submit a pull request" icon="code-pull-request" href="https://github.com/TXG0Fk3/YT-Downloader/pulls">
+    Fix a bug, improve code quality, or implement an approved feature. Link the related issue in your PR description.
+  </Card>
+</CardGroup>
+
+## Development requirements
+
+Before building the project, make sure the following tools are installed:
+
+<AccordionGroup>
+  <Accordion title=".NET 10 SDK" icon="microsoft" defaultOpen={true}>
+    The project targets `net10.0-windows10.0.26100.0`. Download the .NET 10 SDK from [dot.net](https://dot.net). Verify your installation:
+
+    ```bash
+    dotnet --version
+    ```
+  </Accordion>
+  <Accordion title="Windows 10 SDK (build 26100)" icon="windows">
+    Required to compile WinUI 3 XAML. Install it through the Visual Studio installer under **Individual Components → Windows 10 SDK (10.0.26100.0)**, or download it from the Windows Dev Center.
+
+    The minimum supported runtime version is `10.0.17763.0` (Windows 10 October 2018 Update).
+  </Accordion>
+  <Accordion title="IDE — Visual Studio 2022 or VS Code" icon="laptop-code">
+    **Visual Studio 2022** is recommended. Install the following workloads in the VS installer:
+    - Desktop development with C++
+    - .NET desktop development
+    - Windows application development (WinUI / Windows App SDK)
+
+    Alternatively, use **VS Code** with the [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) extension.
+  </Accordion>
+  <Accordion title="Target platforms: x64 and ARM64" icon="microchip">
+    The project supports two runtime identifiers: `win-x64` and `win-arm64`. Select the appropriate platform configuration in Visual Studio before building.
+  </Accordion>
+</AccordionGroup>
+
+## Building from source
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/TXG0Fk3/YT-Downloader.git
+    ```
+  </Step>
+  <Step title="Open the solution">
+    Open `YT Downloader.slnx` in Visual Studio 2022. The `.slnx` format requires Visual Studio 2022 17.10 or later.
+  </Step>
+  <Step title="Restore NuGet packages">
+    Package restore runs automatically on first build. To trigger it manually:
+
+    ```bash
+    dotnet restore
+    ```
+  </Step>
+  <Step title="Select the target platform">
+    In the Visual Studio toolbar, change the platform dropdown from **Any CPU** to **x64** or **ARM64** to match your machine. The project does not support AnyCPU due to native WinUI dependencies.
+  </Step>
+  <Step title="Build and run">
+    Press **F5** to build and launch the app with the debugger attached, or **Ctrl+F5** to run without the debugger.
+  </Step>
+</Steps>
+
+<Tip>
+  The build step automatically removes non-English `.mui` locale folders from the output directory to keep build artifacts small. This is handled by the `RemoveFoldersWithMuiFiles` MSBuild target in `YT Downloader.csproj`.
+</Tip>
+
+## Key NuGet dependencies
+
+The following packages are declared in `YT Downloader/YT Downloader.csproj`:
+
+| Package | Version | Purpose |
+|---|---|---|
+| `CommunityToolkit.Mvvm` | 8.4.0 | MVVM base classes (`ObservableObject`, `RelayCommand`), `IMessenger` |
+| `CommunityToolkit.WinUI.Controls.SettingsControls` | 8.2.251219 | Pre-built Settings UI controls for WinUI 3 |
+| `Microsoft.Extensions.DependencyInjection` | 10.0.3 | DI container used in `App.xaml.cs` |
+| `Microsoft.WindowsAppSDK` | 2.0.250930001-experimental1 | WinUI 3 runtime (self-contained) |
+| `Microsoft.Windows.SDK.BuildTools` | 10.0.26100.7705 | Windows SDK build tooling |
+| `YoutubeExplode` | 6.5.7 | YouTube video/audio metadata and stream download |
+
+<Warning>
+  FFmpeg is **not** distributed as a NuGet package. It is bundled separately with the application. The `FFmpegLocator` helper (`Helpers/FFmpegLocator.cs`) resolves the FFmpeg binary path at runtime. If you build from source, ensure FFmpeg is present in the expected location before running downloads.
+</Warning>

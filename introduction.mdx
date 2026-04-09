@@ -1,0 +1,49 @@
+---
+title: "Introduction"
+description: "What YT Downloader is and why you'd use it"
+---
+
+YT Downloader is a Windows desktop application for downloading videos, audio, and playlists from YouTube. It is built with WinUI 3 and C#, and uses [YoutubeExplode](https://github.com/Tyrrrz/YoutubeExplode) to fetch stream data and FFmpeg to process and convert media files.
+
+## Key features
+
+<CardGroup cols={3}>
+  <Card title="Video download" icon="video">
+    Download YouTube videos in MP4 format across multiple quality levels, including 1080p, 720p, 480p, and more.
+  </Card>
+  <Card title="Audio download" icon="music">
+    Extract and save audio as MP3 at 192 kbps using the highest-bitrate audio stream available.
+  </Card>
+  <Card title="Playlist download" icon="list">
+    Download entire YouTube playlists in one go. Each video is saved as a separate file in a dedicated folder.
+  </Card>
+  <Card title="Parallel downloads" icon="bolt">
+    Up to 3 downloads run concurrently. Playlist metadata is fetched with up to 12 parallel requests to keep things fast.
+  </Card>
+  <Card title="WinUI 3 interface" icon="window">
+    A modern Windows UI built with the Windows App SDK. Supports system, light, and dark themes.
+  </Card>
+  <Card title="FFmpeg integration" icon="wrench">
+    FFmpeg handles muxing video and audio streams into a single MP4 file and converting audio to MP3. It is bundled with the installer.
+  </Card>
+</CardGroup>
+
+## System requirements
+
+| Requirement | Minimum |
+|---|---|
+| Operating system | Windows 10 build 17763 (October 2018 Update) or later |
+| Architecture | x64 or ARM64 |
+| Internet connection | Required for all downloads |
+
+<Note>
+  Windows 10 build 17763 is the minimum supported version. Windows 11 is fully supported on both x64 and ARM64.
+</Note>
+
+## License
+
+YT Downloader is open source and licensed under the [GNU General Public License v3.0 (GPL-3.0)](https://github.com/TXG0Fk3/YT-Downloader/blob/main/LICENSE).
+
+## Next steps
+
+Ready to install the app? Head to the [Installation](/installation) page to get YT Downloader set up on your machine.

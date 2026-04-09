@@ -1,0 +1,72 @@
+---
+title: "Downloading playlists"
+description: "Batch-download entire YouTube playlists as video or audio"
+---
+
+YT Downloader supports downloading entire YouTube playlists in one operation. Each video in the playlist becomes an individual file, saved to a dedicated folder. You can download the playlist as MP4 video or MP3 audio.
+
+## Download a playlist
+
+<Steps>
+  <Step title="Open the add download dialog">
+    Click the **+** button in the main window to open the download dialog.
+  </Step>
+  <Step title="Paste the playlist URL">
+    Paste a YouTube playlist URL into the input field. The app detects that the URL refers to a playlist and fetches the playlist's title and author.
+  </Step>
+  <Step title="Select a format">
+    Choose whether to download the playlist as:
+
+    <CardGroup cols={2}>
+      <Card title="Video (MP4)" icon="video">
+        Downloads each video as an MP4 file. You'll also select a target quality — the app picks the closest available resolution for each individual video.
+      </Card>
+      <Card title="Audio (MP3)" icon="headphones">
+        Downloads only the audio from each video and converts it to MP3 at 192 kbps.
+      </Card>
+    </CardGroup>
+  </Step>
+  <Step title="Select quality (video only)">
+    If you chose video format, select your preferred quality from the list (e.g. 1080p, 720p, 480p — all resolutions from 144p to 2160p/4K are offered, including 60fps variants). The app then downloads each video at the closest available MP4 stream to that quality.
+  </Step>
+  <Step title="Choose an output folder">
+    Select the parent folder for the playlist. The app automatically creates a subfolder named after the playlist inside it.
+  </Step>
+  <Step title="Click Download">
+    The playlist group is added to the download queue. The app fetches stream metadata for all videos concurrently, then begins downloading them.
+  </Step>
+</Steps>
+
+## How playlist downloading works
+
+Playlist downloads run in two stages:
+
+**Stage 1 — Metadata fetching**
+
+The app fetches stream information for all videos in the playlist simultaneously, using up to **12 concurrent requests**. This means metadata for a 100-video playlist is retrieved much faster than sequentially.
+
+**Stage 2 — Downloading**
+
+As each video's metadata becomes available, it's added to the download queue. Up to **3 videos download in parallel** at any time. Additional videos wait in the queue and start automatically as slots open.
+
+<Info>
+  The playlist folder is created before any downloads begin. Each video is saved inside that folder using the video's title as the filename (with any invalid characters removed automatically).
+</Info>
+
+## Playlist behavior
+
+<AccordionGroup>
+  <Accordion title="Individual video failures">
+    If one video in a playlist fails — for example, because it's region-locked or has been removed — the remaining videos continue downloading. Failed items are marked with an error status and can be viewed individually in the queue.
+  </Accordion>
+  <Accordion title="Quality matching">
+    When downloading a playlist as video, you select a target quality from a fixed list (144p through 2160p/4K, including 60fps variants). The app then finds the closest available MP4 stream for each individual video. If a video doesn't have the exact target resolution, the nearest available quality is automatically selected.
+  </Accordion>
+  <Accordion title="Cancelling a playlist">
+    Cancelling a playlist download stops all pending and in-progress videos in that group at once. Any files that were already completed remain on disk.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Very large playlists (hundreds of videos) can take a significant amount of time. Metadata is fetched quickly, but total download time depends on the size and quality of each video.
+</Warning>

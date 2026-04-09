@@ -1,97 +1,65 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "YT Downloader"
+description: "Download YouTube videos, music, and playlists on Windows — fast, free, and open source."
 ---
 
-## Setting up
+YT Downloader is a modern Windows desktop application for downloading YouTube content. Built with WinUI 3 and C#, it gives you a clean, native interface to save videos in MP4, extract audio as MP3, and batch-download entire playlists — all without ads, accounts, or subscriptions.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install via the setup installer or the Scoop package manager in minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Download your first video or playlist in three easy steps.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Downloading videos" icon="video" href="/guides/downloading-videos">
+    Choose resolution and format, then save MP4 files to any folder.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Downloading audio" icon="music" href="/guides/downloading-audio">
+    Extract high-quality MP3 audio from any YouTube video.
   </Card>
-</Columns>
+  <Card title="Downloading playlists" icon="list" href="/guides/downloading-playlists">
+    Batch-download entire YouTube playlists as video or audio.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/settings">
+    Customize your download folder, theme, and save behavior.
+  </Card>
+</CardGroup>
 
-## Create beautiful pages
+## Key features
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Multiple formats" icon="file-video">
+    Save videos as **MP4** at resolutions up to 4K/60fps, or extract **MP3** audio at 192 kbps.
+  </Card>
+  <Card title="Playlist downloads" icon="layer-group">
+    Download entire YouTube playlists in one click — video or audio — with full progress tracking.
+  </Card>
+  <Card title="Parallel downloads" icon="bolt">
+    Up to three downloads run simultaneously, so your queue moves as fast as your connection allows.
+  </Card>
+  <Card title="Modern Windows UI" icon="windows">
+    Built with WinUI 3 for a native Windows look and feel, with Light, Dark, and System theme support.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Get started
 
-## Need inspiration?
+<Steps>
+  <Step title="Install YT Downloader">
+    Download the latest `YT-Downloader.Setup.exe` from the [GitHub Releases](https://github.com/TXG0Fk3/YT-Downloader/releases) page and run the installer, or use [Scoop](/installation#scoop).
+  </Step>
+  <Step title="Paste a YouTube URL">
+    Click the **+** button in the app, paste any YouTube video or playlist URL, and hit **Search**.
+  </Step>
+  <Step title="Choose format and quality">
+    Select your preferred resolution (for video) or confirm MP3 (for audio), then pick a save location.
+  </Step>
+  <Step title="Download">
+    Click **Download** and watch the progress bar. Your file is saved and ready when the status shows **Completed**.
+  </Step>
+</Steps>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Note>
+  YT Downloader requires **Windows 10 (build 17763)** or later and is available for both **x64** and **ARM64** processors.
+</Note>

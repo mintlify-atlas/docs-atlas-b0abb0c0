@@ -1,0 +1,57 @@
+---
+title: "Themes"
+description: "Switch between Light, Dark, and System themes"
+---
+
+YT Downloader supports three theme options that control the visual appearance of the application. The selected theme is applied immediately and persisted across sessions.
+
+## Theme options
+
+<CardGroup cols={3}>
+  <Card title="System" icon="display">
+    Follows your active Windows system theme. If you switch your OS between light and dark mode, the app updates to match. This is the default.
+  </Card>
+  <Card title="Light" icon="sun">
+    Always renders the app in light mode, regardless of the Windows system theme setting.
+  </Card>
+  <Card title="Dark" icon="moon">
+    Always renders the app in dark mode, regardless of the Windows system theme setting.
+  </Card>
+</CardGroup>
+
+<Tip>
+  **System** is the recommended choice. It automatically adapts to your Windows theme preference so the app always feels consistent with the rest of your desktop.
+</Tip>
+
+## Changing the theme
+
+<Steps>
+  <Step title="Open Settings">
+    Click the **Settings** icon in the top-right area of the main window toolbar to open the Settings dialog.
+  </Step>
+  <Step title="Expand the Appearance section">
+    In the Settings dialog, locate the **Appearance** section. Click **Application Theme** to expand it and reveal the theme options.
+  </Step>
+  <Step title="Select a theme">
+    Choose **System**, **Light**, or **Dark** from the radio button list.
+  </Step>
+  <Step title="Close Settings">
+    Click **Close**. The selected theme is saved automatically and will be used on all future launches.
+  </Step>
+</Steps>
+
+<Info>
+  The theme change applies immediately as soon as you select an option — you do not need to close the dialog or restart the app to see the effect.
+</Info>
+
+## How themes are stored
+
+The selected theme is written to the `Theme` field in `%APPDATA%\YT Downloader\config.json`:
+
+```json config.json
+{
+  "Theme": "System"
+}
+```
+
+Valid string values are `"System"`, `"Light"`, and `"Dark"`, matching the `ThemeOption` enum defined in `Enums/ThemeOption.cs`. If the value is missing or unrecognized, the app defaults to `System`.

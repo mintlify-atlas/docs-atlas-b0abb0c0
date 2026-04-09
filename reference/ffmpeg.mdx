@@ -1,0 +1,88 @@
+---
+title: "FFmpeg"
+description: "How YT Downloader uses FFmpeg for video and audio processing"
+---
+
+FFmpeg is a required dependency for YT Downloader. The app uses it to merge separate video and audio streams into a finished MP4 file, and to convert audio streams to MP3.
+
+<Note>
+  If you installed YT Downloader using the setup installer, FFmpeg is bundled in the app directory. Most users do not need to install it manually.
+</Note>
+
+## What FFmpeg does
+
+YouTube delivers video and audio as separate streams. YT Downloader downloads both streams to temporary files, then calls FFmpeg to produce the final output:
+
+- **Video downloads** — merges a video-only MP4 stream and an audio-only MP4 stream into a single file using a lossless stream copy (no re-encoding).
+- **Audio downloads** — converts the best available audio stream to MP3 at 192 kbps.
+
+The `Converting` status in the download list reflects the FFmpeg processing step. Temporary files are deleted automatically after FFmpeg completes.
+
+## FFmpeg commands
+
+The exact commands the app runs:
+
+**Video merge**
+```bash
+ffmpeg -i video.mp4 -i audio.mp4 -c copy -y output.mp4
+```
+
+**Audio conversion**
+```bash
+ffmpeg -i audio.mp4 -vn -ab 192k -y output.mp3
+```
+
+The `-c copy` flag means the video and audio streams are remuxed, not transcoded — the output quality is identical to the source. The `-y` flag allows FFmpeg to overwrite the output file without prompting.
+
+## How FFmpeg is located
+
+The app resolves the FFmpeg executable via `FFmpegLocator.GetFFmpegPath()` using the following lookup order:
+
+<Steps>
+  <Step title="Check the app directory">
+    Looks for `ffmpeg.exe` in the same directory as the YT Downloader executable (`AppDomain.CurrentDomain.BaseDirectory`). If found, this path is used.
+  </Step>
+  <Step title="Check the system PATH">
+    If `ffmpeg.exe` is not in the app directory, the app searches each directory in the `PATH` environment variable. If found, `ffmpeg` is used as the executable name.
+  </Step>
+  <Step title="Throw if not found">
+    If neither location has FFmpeg, a `FileNotFoundException` is thrown: `"FFmpeg not found. Make sure it's in the app folder or in the system PATH."` The download will fail with an error status.
+  </Step>
+</Steps>
+
+The resolved path is cached after the first lookup, so subsequent downloads do not repeat the search.
+
+<Warning>
+  If FFmpeg is not found in either location, all downloads will fail. The download item will be marked with an error status. Reinstalling via the setup installer is the easiest fix.
+</Warning>
+
+## Manual FFmpeg installation
+
+If you installed via Scoop, built from source, or need to repair an installation where FFmpeg is missing, you can set it up manually.
+
+<Steps>
+  <Step title="Download FFmpeg">
+    Go to [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) and download a Windows build. The "essentials" build from gyan.dev or BtbN is sufficient.
+  </Step>
+  <Step title="Extract the archive">
+    Extract the downloaded archive to a permanent location, for example `C:\ffmpeg\`.
+  </Step>
+  <Step title="Make FFmpeg available to YT Downloader">
+    Choose one of the following options:
+
+    **Option A — Place in the app folder (recommended)**
+
+    Copy `ffmpeg.exe` from the extracted `bin\` subfolder into the YT Downloader installation directory. The app checks here first.
+
+    **Option B — Add to system PATH**
+
+    Add the `bin\` subfolder (e.g. `C:\ffmpeg\bin`) to your system `PATH` environment variable. The app will find it via PATH if it is not in the app folder.
+  </Step>
+  <Step title="Verify">
+    Open a new Command Prompt and run `ffmpeg -version`. If it prints version information, FFmpeg is correctly configured.
+  </Step>
+</Steps>
+
+<Tip>
+  Option A (placing `ffmpeg.exe` in the app folder) is preferred because it keeps the dependency self-contained and avoids conflicts with other software that may require a different FFmpeg version.
+</Tip>
